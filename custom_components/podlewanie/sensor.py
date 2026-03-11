@@ -207,7 +207,14 @@ class StatusSensor(
 
     @property
     def native_value(self) -> str:
-        return self.coordinator.status.value
+        # Derive status directly from live state, not cached coordinator.status
+        if self.coordinator._antifreeze and self.coordinator._antifreeze.is_hibernating:
+            return "hibernation"
+        if self.coordinator.sequencer.is_running:
+            return "running"
+        if not self.coordinator.master_enabled:
+            return "degraded"
+        return "idle"
 
     @property
     def extra_state_attributes(self) -> dict:

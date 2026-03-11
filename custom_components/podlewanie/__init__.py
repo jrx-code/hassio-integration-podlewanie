@@ -39,7 +39,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     conf = config[DOMAIN]
     coordinator = PodlewanieCoordinator(hass, conf)
     await coordinator.async_setup()
-    await coordinator.async_config_entry_first_refresh()
+    await coordinator.async_refresh()
 
     hass.data[DOMAIN] = coordinator
 
