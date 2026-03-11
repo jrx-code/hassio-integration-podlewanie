@@ -1,0 +1,100 @@
+{
+  "entity": {
+    "binary_sensor": {
+      "zone_active": {
+        "name": "{zone_name} Active"
+      },
+      "running": {
+        "name": "Running"
+      }
+    },
+    "sensor": {
+      "zone_remaining": {
+        "name": "{zone_name} Remaining"
+      },
+      "zone_next_run": {
+        "name": "{zone_name} Next Run"
+      },
+      "zone_volume_today": {
+        "name": "{zone_name} Volume Today"
+      },
+      "zone_bucket": {
+        "name": "{zone_name} Bucket"
+      },
+      "zone_soil": {
+        "name": "{zone_name} Soil"
+      },
+      "et_daily": {
+        "name": "ET Daily"
+      },
+      "status": {
+        "name": "Status",
+        "state": {
+          "idle": "Idle",
+          "running": "Running",
+          "antifreeze": "Anti-freeze",
+          "degraded": "Degraded",
+          "hibernation": "Hibernation"
+        }
+      }
+    },
+    "switch": {
+      "zone_enabled": {
+        "name": "{zone_name} Enabled"
+      },
+      "master_enabled": {
+        "name": "Enabled"
+      }
+    },
+    "number": {
+      "zone_duration": {
+        "name": "{zone_name} Duration"
+      },
+      "zone_adjustment": {
+        "name": "{zone_name} Adjustment"
+      },
+      "zone_crop_kc": {
+        "name": "{zone_name} Crop Kc"
+      },
+      "moisture_threshold": {
+        "name": "Moisture Threshold"
+      },
+      "rain_threshold": {
+        "name": "Rain Threshold"
+      },
+      "season_multiplier": {
+        "name": "Season Multiplier"
+      }
+    }
+  },
+  "services": {
+    "manual_run": {
+      "name": "Manual Run",
+      "description": "Manually run a single irrigation zone."
+    },
+    "run_sequence": {
+      "name": "Run Sequence",
+      "description": "Run full sequential irrigation cycle."
+    },
+    "cancel": {
+      "name": "Cancel",
+      "description": "Stop all irrigation."
+    },
+    "adjust_time": {
+      "name": "Adjust Time",
+      "description": "Set zone duration multiplier."
+    },
+    "enable": {
+      "name": "Enable Zone",
+      "description": "Enable a zone for scheduling."
+    },
+    "disable": {
+      "name": "Disable Zone",
+      "description": "Disable a zone from scheduling."
+    },
+    "reload": {
+      "name": "Reload",
+      "description": "Reload configuration."
+    }
+  }
+}

@@ -1,0 +1,73 @@
+manual_run:
+  name: Manual Run
+  description: Manually run a single irrigation zone.
+  fields:
+    zone:
+      name: Zone
+      description: Zone key (e.g., brzeg_domu, grill, szopka_garaz, ogrod_przedni)
+      required: true
+      selector:
+        text:
+    duration:
+      name: Duration
+      description: Override duration in minutes (optional, uses zone default if omitted)
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: min
+
+run_sequence:
+  name: Run Sequence
+  description: Run full sequential irrigation cycle for all enabled zones.
+
+cancel:
+  name: Cancel
+  description: Stop all irrigation and clear the queue.
+
+adjust_time:
+  name: Adjust Time
+  description: Set the duration adjustment multiplier for a zone.
+  fields:
+    zone:
+      name: Zone
+      description: Zone key
+      required: true
+      selector:
+        text:
+    percentage:
+      name: Percentage
+      description: Duration multiplier (0-200%)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 200
+          unit_of_measurement: "%"
+
+enable:
+  name: Enable Zone
+  description: Enable a zone for scheduled irrigation.
+  fields:
+    zone:
+      name: Zone
+      description: Zone key
+      required: true
+      selector:
+        text:
+
+disable:
+  name: Disable Zone
+  description: Disable a zone from scheduled irrigation.
+  fields:
+    zone:
+      name: Zone
+      description: Zone key
+      required: true
+      selector:
+        text:
+
+reload:
+  name: Reload
+  description: Reload the Podlewanie configuration (requires HA restart for YAML changes).

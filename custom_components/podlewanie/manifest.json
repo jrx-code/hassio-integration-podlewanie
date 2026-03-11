@@ -1,0 +1,10 @@
+{
+  "domain": "podlewanie",
+  "name": "Podlewanie",
+  "codeowners": ["@jrx-code"],
+  "config_flow": false,
+  "documentation": "https://github.com/jrx-code/hassio-integration-podlewanie",
+  "iot_class": "local_push",
+  "requirements": [],
+  "version": "1.0.0"
+}
