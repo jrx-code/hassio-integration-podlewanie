@@ -1,4 +1,4 @@
-"""Sensor platform for Podlewanie."""
+"""Sensor platform for Podlewanie (v2 — device-per-zone)."""
 
 from __future__ import annotations
 
@@ -9,24 +9,23 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfTime, UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .binary_sensor import DEVICE_INFO
-from .const import DOMAIN
+from .__init__ import PodlewanieConfigEntry
+from .const import controller_device_info, zone_device_info
 from .coordinator import PodlewanieCoordinator
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PodlewanieConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Podlewanie sensors from config entry."""
-    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
+    coordinator: PodlewanieCoordinator = entry.runtime_data
 
     entities: list[SensorEntity] = []
 
@@ -53,7 +52,6 @@ class ZoneRemainingSensor(
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.MINUTES
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -61,6 +59,8 @@ class ZoneRemainingSensor(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Remaining"
         self._attr_unique_id = f"podlewanie_{zone_key}_remaining"
 
@@ -78,7 +78,6 @@ class ZoneNextRunSensor(
     """Next scheduled run time for a zone."""
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -86,6 +85,8 @@ class ZoneNextRunSensor(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Next Run"
         self._attr_unique_id = f"podlewanie_{zone_key}_next_run"
 
@@ -103,7 +104,6 @@ class ZoneVolumeTodaySensor(
     _attr_device_class = SensorDeviceClass.VOLUME
     _attr_native_unit_of_measurement = UnitOfVolume.LITERS
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -111,6 +111,8 @@ class ZoneVolumeTodaySensor(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Volume Today"
         self._attr_unique_id = f"podlewanie_{zone_key}_volume_today"
 
@@ -128,7 +130,6 @@ class ZoneBucketSensor(
     _attr_native_unit_of_measurement = "mm"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:water-opacity"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -136,6 +137,8 @@ class ZoneBucketSensor(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Bucket"
         self._attr_unique_id = f"podlewanie_{zone_key}_bucket"
 
@@ -154,7 +157,6 @@ class ZoneSoilSensor(
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_device_class = SensorDeviceClass.MOISTURE
     _attr_icon = "mdi:water-percent"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -162,6 +164,8 @@ class ZoneSoilSensor(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Soil"
         self._attr_unique_id = f"podlewanie_{zone_key}_soil"
         self._soil_entity = zone.soil_moisture_entity
@@ -187,10 +191,11 @@ class ETDailySensor(
     _attr_native_unit_of_measurement = "mm/day"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:weather-sunny-alert"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = controller_device_info(entry_id)
         self._attr_name = "Podlewanie ET Daily"
         self._attr_unique_id = "podlewanie_et_daily"
 
@@ -205,10 +210,11 @@ class StatusSensor(
     """Controller status sensor."""
 
     _attr_icon = "mdi:sprinkler-variant"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = controller_device_info(entry_id)
         self._attr_name = "Podlewanie Status"
         self._attr_unique_id = "podlewanie_status"
 

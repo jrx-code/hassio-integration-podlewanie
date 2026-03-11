@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import Any
+
+from homeassistant.helpers.device_registry import DeviceEntryType
+from homeassistant.helpers.entity import DeviceInfo
 
 DOMAIN = "podlewanie"
 STORAGE_KEY = "podlewanie"
@@ -121,3 +125,83 @@ class SequencerState(StrEnum):
     WATERING = "watering"
     INTER_ZONE_DELAY = "inter_zone_delay"
     STOPPING = "stopping"
+
+
+# --- v2: Default options for new config entries ---
+
+DEFAULT_OPTIONS: dict[str, Any] = {
+    "zones": [],
+    "schedules": [],
+    "weather": {
+        "rain_sensors": [],
+        "rain_binary": None,
+        "forecast_entity": None,
+        "forecast_hours": DEFAULT_FORECAST_HOURS,
+        "rain_threshold": DEFAULT_RAIN_THRESHOLD,
+        "forecast_rain_threshold": DEFAULT_FORECAST_RAIN_THRESHOLD,
+    },
+    "tank": None,
+    "antifreeze": None,
+    "et": {
+        "enabled": True,
+        "bucket_max": DEFAULT_BUCKET_MAX,
+        "moisture_threshold": DEFAULT_MOISTURE_THRESHOLD,
+    },
+    "sequencer": {
+        "inter_zone_delay": DEFAULT_INTER_ZONE_DELAY,
+    },
+}
+
+# Month names for UI selectors
+MONTH_NAMES: dict[int, str] = {
+    1: "January",
+    2: "February",
+    3: "March",
+    4: "April",
+    5: "May",
+    6: "June",
+    7: "July",
+    8: "August",
+    9: "September",
+    10: "October",
+    11: "November",
+    12: "December",
+}
+
+# Weekday names for UI selectors
+WEEKDAY_NAMES: dict[str, str] = {
+    "mon": "Monday",
+    "tue": "Tuesday",
+    "wed": "Wednesday",
+    "thu": "Thursday",
+    "fri": "Friday",
+    "sat": "Saturday",
+    "sun": "Sunday",
+}
+
+
+# --- v2: Device info helpers ---
+
+
+def controller_device_info(entry_id: str) -> DeviceInfo:
+    """Device info for the main irrigation controller."""
+    return DeviceInfo(
+        identifiers={(DOMAIN, entry_id)},
+        name="Podlewanie",
+        manufacturer="JI Engineering",
+        model="Irrigation Controller",
+        entry_type=DeviceEntryType.SERVICE,
+    )
+
+
+def zone_device_info(
+    entry_id: str, zone_key: str, zone_name: str
+) -> DeviceInfo:
+    """Device info for an irrigation zone (child of controller)."""
+    return DeviceInfo(
+        identifiers={(DOMAIN, f"{entry_id}_{zone_key}")},
+        name=f"Podlewanie {zone_name}",
+        manufacturer="JI Engineering",
+        model="Irrigation Zone",
+        via_device=(DOMAIN, entry_id),
+    )

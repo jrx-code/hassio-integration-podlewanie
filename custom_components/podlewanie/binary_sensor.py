@@ -1,4 +1,4 @@
-"""Binary sensor platform for Podlewanie."""
+"""Binary sensor platform for Podlewanie (v2 — device-per-zone)."""
 
 from __future__ import annotations
 
@@ -6,32 +6,22 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceEntryType
-from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .__init__ import PodlewanieConfigEntry
+from .const import controller_device_info, zone_device_info
 from .coordinator import PodlewanieCoordinator
-
-DEVICE_INFO = DeviceInfo(
-    identifiers={(DOMAIN, "podlewanie")},
-    name="Podlewanie",
-    manufacturer="JI Engineering",
-    model="Irrigation Controller",
-    entry_type=DeviceEntryType.SERVICE,
-)
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PodlewanieConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Podlewanie binary sensors from config entry."""
-    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
+    coordinator: PodlewanieCoordinator = entry.runtime_data
 
     entities: list[BinarySensorEntity] = []
 
@@ -49,7 +39,6 @@ class ZoneActiveBinarySensor(
     """Binary sensor indicating if a zone is actively watering."""
 
     _attr_device_class = BinarySensorDeviceClass.RUNNING
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -57,6 +46,8 @@ class ZoneActiveBinarySensor(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Active"
         self._attr_unique_id = f"podlewanie_{zone_key}_active"
 
@@ -72,10 +63,11 @@ class ControllerRunningBinarySensor(
     """Binary sensor indicating if the controller is running."""
 
     _attr_device_class = BinarySensorDeviceClass.RUNNING
-    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = controller_device_info(entry_id)
         self._attr_name = "Podlewanie Running"
         self._attr_unique_id = "podlewanie_running"
 

@@ -1,4 +1,208 @@
 {
+  "config": {
+    "step": {
+      "user": {
+        "title": "Podlewanie",
+        "description": "Add the Podlewanie irrigation controller.\n\nZones and schedules are configured via Settings \u2192 Integrations \u2192 Configure."
+      }
+    },
+    "abort": {
+      "already_configured": "Podlewanie is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Podlewanie Settings",
+        "menu_options": {
+          "add_zone": "Add zone",
+          "edit_zone": "Edit zone",
+          "remove_zone": "Remove zone",
+          "schedules": "Schedules",
+          "weather": "Weather",
+          "tank": "Rainwater tank",
+          "antifreeze": "Anti-freeze",
+          "et_settings": "Evapotranspiration (ET)",
+          "sequencer": "Sequencer"
+        }
+      },
+      "add_zone": {
+        "title": "Add Zone",
+        "description": "Configure a new irrigation zone.",
+        "data": {
+          "name": "Zone name",
+          "valve": "Valve entity (switch or valve)",
+          "area_m2": "Area",
+          "duration": "Default duration",
+          "max_duration": "Maximum duration"
+        }
+      },
+      "add_zone_sensors": {
+        "title": "Zone Sensors (optional)",
+        "description": "Assign optional sensors to the zone.",
+        "data": {
+          "soil_moisture": "Soil moisture sensor",
+          "soil_temperature": "Soil temperature sensor",
+          "soil_battery": "Sensor battery",
+          "flow_meter": "Flow meter sensor"
+        }
+      },
+      "edit_zone": {
+        "title": "Edit Zone",
+        "description": "Select a zone to edit.",
+        "data": {
+          "zone": "Zone"
+        }
+      },
+      "edit_zone_settings": {
+        "title": "Edit Zone Settings",
+        "data": {
+          "name": "Zone name",
+          "valve": "Valve entity",
+          "area_m2": "Area",
+          "duration": "Default duration",
+          "max_duration": "Maximum duration",
+          "soil_moisture": "Soil moisture sensor",
+          "soil_temperature": "Soil temperature sensor",
+          "soil_battery": "Sensor battery",
+          "flow_meter": "Flow meter sensor"
+        }
+      },
+      "remove_zone": {
+        "title": "Remove Zone",
+        "description": "Select a zone to remove.",
+        "data": {
+          "zone": "Zone"
+        }
+      },
+      "remove_zone_confirm": {
+        "title": "Confirm Removal",
+        "description": "Remove zone **{zone}**? This cannot be undone."
+      },
+      "schedules": {
+        "title": "Schedules",
+        "menu_options": {
+          "add_schedule": "Add schedule",
+          "edit_schedule": "Edit schedule",
+          "remove_schedule": "Remove schedule"
+        }
+      },
+      "add_schedule": {
+        "title": "Add Schedule",
+        "data": {
+          "key": "Schedule name",
+          "time": "Start time",
+          "months": "Active months",
+          "weekdays": "Active weekdays",
+          "retry_next_day": "Retry next day if missed"
+        }
+      },
+      "edit_schedule": {
+        "title": "Edit Schedule",
+        "description": "Select a schedule to edit.",
+        "data": {
+          "schedule": "Schedule"
+        }
+      },
+      "edit_schedule_settings": {
+        "title": "Edit Schedule",
+        "data": {
+          "time": "Start time",
+          "months": "Active months",
+          "weekdays": "Active weekdays",
+          "retry_next_day": "Retry next day if missed"
+        }
+      },
+      "remove_schedule": {
+        "title": "Remove Schedule",
+        "description": "Select a schedule to remove.",
+        "data": {
+          "schedule": "Schedule"
+        }
+      },
+      "remove_schedule_confirm": {
+        "title": "Confirm Removal",
+        "description": "Remove schedule **{schedule}**? This cannot be undone."
+      },
+      "weather": {
+        "title": "Weather Settings",
+        "description": "Configure rain and forecast sensors for skip logic.",
+        "data": {
+          "rain_sensors": "Rain sensors",
+          "rain_binary": "Rain binary sensor",
+          "forecast_entity": "Weather forecast entity",
+          "forecast_hours": "Forecast lookahead",
+          "rain_threshold": "Rain skip threshold",
+          "forecast_rain_threshold": "Forecast rain skip threshold"
+        }
+      },
+      "tank": {
+        "title": "Rainwater Tank",
+        "description": "Configure rainwater tank and pump control.",
+        "data": {
+          "enabled": "Enable rainwater tank",
+          "level_sensor": "Tank level sensor",
+          "pump_switch": "Pump switch",
+          "pump_on_above": "Start pump above",
+          "pump_off_below": "Stop pump below"
+        }
+      },
+      "antifreeze": {
+        "title": "Anti-freeze",
+        "menu_options": {
+          "antifreeze_settings": "Settings",
+          "add_tier": "Add temperature tier",
+          "remove_tier": "Remove temperature tier",
+          "antifreeze_disable": "Disable anti-freeze"
+        }
+      },
+      "antifreeze_enable": {
+        "title": "Enable Anti-freeze",
+        "description": "Enable anti-freeze protection with default settings?"
+      },
+      "antifreeze_disable": {
+        "title": "Disable Anti-freeze",
+        "description": "Disable anti-freeze protection? All tiers will be removed."
+      },
+      "antifreeze_settings": {
+        "title": "Anti-freeze Settings",
+        "data": {
+          "flush_duration": "Flush duration",
+          "hibernation_below": "Hibernation temperature",
+          "recovery_above": "Recovery temperature"
+        }
+      },
+      "add_tier": {
+        "title": "Add Temperature Tier",
+        "description": "Add an anti-freeze flush tier. The system will flush valves at the specified interval when temperature is at or below the threshold.",
+        "data": {
+          "temp_max": "Temperature threshold",
+          "interval": "Flush interval"
+        }
+      },
+      "remove_tier": {
+        "title": "Remove Temperature Tier",
+        "data": {
+          "tier": "Tier to remove"
+        }
+      },
+      "et_settings": {
+        "title": "Evapotranspiration (ET)",
+        "description": "Configure the ET-based smart watering bucket system.",
+        "data": {
+          "enabled": "Enable ET calculation",
+          "bucket_max": "Maximum bucket capacity",
+          "moisture_threshold": "Skip watering above"
+        }
+      },
+      "sequencer": {
+        "title": "Sequencer Settings",
+        "data": {
+          "inter_zone_delay": "Delay between zones"
+        }
+      }
+    }
+  },
   "entity": {
     "binary_sensor": {
       "zone_active": {
@@ -91,10 +295,6 @@
     "disable": {
       "name": "Disable Zone",
       "description": "Disable a zone from scheduling."
-    },
-    "reload": {
-      "name": "Reload",
-      "description": "Reload configuration."
     }
   }
 }

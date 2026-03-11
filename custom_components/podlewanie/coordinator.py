@@ -1,11 +1,12 @@
-"""DataUpdateCoordinator for the Podlewanie integration."""
+"""DataUpdateCoordinator for the Podlewanie integration (v2)."""
 
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, time as dt_time
+from datetime import datetime, time as dt_time, timedelta
 from typing import Any
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP,
     STATE_UNAVAILABLE,
@@ -28,7 +29,6 @@ from .const import (
     CONF_FORECAST_RAIN_THRESHOLD,
     CONF_HIBERNATION_BELOW,
     CONF_INTER_ZONE_DELAY,
-    CONF_LATITUDE,
     CONF_LEVEL_SENSOR,
     CONF_MOISTURE_THRESHOLD,
     CONF_MONTHS,
@@ -76,35 +76,46 @@ from .irrigation import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def _parse_time_string(time_str: str) -> dt_time:
+    """Parse 'HH:MM:SS' or 'HH:MM' string to datetime.time."""
+    parts = time_str.split(":")
+    return dt_time(
+        int(parts[0]),
+        int(parts[1]),
+        int(parts[2]) if len(parts) > 2 else 0,
+    )
+
+
 class PodlewanieCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinator to manage irrigation state and scheduling."""
 
-    def __init__(self, hass: HomeAssistant, config: dict[str, Any]) -> None:
-        """Initialize the coordinator."""
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Initialize the coordinator from config entry options."""
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
             update_interval=timedelta(seconds=UPDATE_INTERVAL_SECONDS),
         )
-        self._config = config
+        self._entry = entry
         self._store = Store[dict[str, Any]](hass, STORAGE_VERSION, STORAGE_KEY)
         self._unsub_listeners: list[CALLBACK_TYPE] = []
 
-        # Build zones
+        opts = entry.options
+
+        # Build zones from options
         self.zones: list[Zone] = [
-            Zone.from_config(zc) for zc in config[CONF_ZONES]
+            Zone.from_config(zc) for zc in opts.get(CONF_ZONES, [])
         ]
         self._zone_map: dict[str, Zone] = {z.key: z for z in self.zones}
 
         # Latitude for ET calculation
-        latitude = config.get(CONF_LATITUDE) or hass.config.latitude
-        self._latitude = latitude
+        self._latitude = hass.config.latitude
 
         # ET Calculator
-        et_cfg = config.get(CONF_ET, {})
+        et_cfg = opts.get(CONF_ET, {})
         self._et_enabled = et_cfg.get(CONF_ET_ENABLED, True)
-        self._et_calc = ETCalculator(latitude) if self._et_enabled else None
+        self._et_calc = ETCalculator(self._latitude) if self._et_enabled else None
 
         # Bucket Tracker
         bucket_max = et_cfg.get(CONF_BUCKET_MAX, DEFAULT_BUCKET_MAX)
@@ -114,7 +125,7 @@ class PodlewanieCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._bucket_tracker = BucketTracker(bucket_max, self._moisture_threshold)
 
         # Pump controller
-        tank_cfg = config.get(CONF_TANK)
+        tank_cfg = opts.get(CONF_TANK)
         self._pump: PumpController | None = None
         if tank_cfg is not None:
             self._pump = PumpController(
@@ -126,17 +137,17 @@ class PodlewanieCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
         # Sequencer
-        seq_cfg = config.get(CONF_SEQUENCER, {})
+        seq_cfg = opts.get(CONF_SEQUENCER, {})
         inter_delay = seq_cfg.get(CONF_INTER_ZONE_DELAY, 30)
         self.sequencer = Sequencer(hass, self.zones, inter_delay, self._pump)
         self.sequencer.set_coordinator(self)
 
         # Antifreeze
-        af_cfg = config.get(CONF_ANTIFREEZE)
+        af_cfg = opts.get(CONF_ANTIFREEZE)
         self._antifreeze: AntifreezeManager | None = None
         if af_cfg is not None:
             self._antifreeze = AntifreezeManager(
-                tiers=af_cfg[CONF_TIERS],
+                tiers=af_cfg.get(CONF_TIERS, []),
                 flush_duration=af_cfg.get(
                     CONF_FLUSH_DURATION, DEFAULT_FLUSH_DURATION
                 ),
@@ -149,10 +160,16 @@ class PodlewanieCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
         # Weather config
-        self._weather_cfg = config.get(CONF_WEATHER, {})
+        self._weather_cfg = opts.get(CONF_WEATHER, {})
 
-        # Schedules
-        self._schedules = config.get(CONF_SCHEDULES, [])
+        # Schedules — parse time strings to dt_time
+        self._schedules: list[dict[str, Any]] = []
+        for s in opts.get(CONF_SCHEDULES, []):
+            schedule = dict(s)
+            time_val = s[CONF_TIME]
+            if isinstance(time_val, str):
+                schedule[CONF_TIME] = _parse_time_string(time_val)
+            self._schedules.append(schedule)
 
         # Master switch
         self.master_enabled: bool = True
@@ -171,6 +188,11 @@ class PodlewanieCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         # Status
         self.status: ControllerStatus = ControllerStatus.IDLE
+
+    @property
+    def entry(self) -> ConfigEntry:
+        """Return the config entry."""
+        return self._entry
 
     async def async_setup(self) -> None:
         """Set up scheduler listeners and restore state."""
@@ -312,7 +334,7 @@ class PodlewanieCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self._antifreeze.check_hibernation(avg_temp)
                 if self._antifreeze.should_flush(avg_temp):
                     _LOGGER.info(
-                        "Antifreeze flush triggered at %.1f°C", avg_temp
+                        "Antifreeze flush triggered at %.1f\u00b0C", avg_temp
                     )
                     self._antifreeze.last_flush_time = dt_util.utcnow()
                     await self.sequencer.run_antifreeze(
@@ -513,7 +535,7 @@ class PodlewanieCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _save_state(self) -> None:
         """Persist state to storage."""
-        data = {
+        data: dict[str, Any] = {
             "master_enabled": self.master_enabled,
             "season_multiplier": self.season_multiplier,
             "rain_threshold": self.rain_threshold,

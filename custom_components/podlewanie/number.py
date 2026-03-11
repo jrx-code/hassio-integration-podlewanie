@@ -1,29 +1,29 @@
-"""Number platform for Podlewanie."""
+"""Number platform for Podlewanie (v2 — device-per-zone)."""
 
 from __future__ import annotations
 
 from homeassistant.components.number import NumberEntity, NumberMode
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .binary_sensor import DEVICE_INFO
+from .__init__ import PodlewanieConfigEntry
 from .const import (
     DEFAULT_CROP_KC,
     DEFAULT_ZONE_ADJUSTMENT,
-    DOMAIN,
+    controller_device_info,
+    zone_device_info,
 )
 from .coordinator import PodlewanieCoordinator
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PodlewanieConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Podlewanie numbers from config entry."""
-    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
+    coordinator: PodlewanieCoordinator = entry.runtime_data
 
     entities: list[NumberEntity] = []
 
@@ -54,7 +54,6 @@ class ZoneDurationNumber(
     _attr_native_unit_of_measurement = "min"
     _attr_mode = NumberMode.BOX
     _attr_icon = "mdi:timer-outline"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -62,6 +61,8 @@ class ZoneDurationNumber(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Duration"
         self._attr_unique_id = f"podlewanie_{zone_key}_duration"
 
@@ -96,7 +97,6 @@ class ZoneAdjustmentNumber(
     _attr_native_unit_of_measurement = "%"
     _attr_mode = NumberMode.SLIDER
     _attr_icon = "mdi:tune-variant"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -104,6 +104,8 @@ class ZoneAdjustmentNumber(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Adjustment"
         self._attr_unique_id = f"podlewanie_{zone_key}_adjustment"
 
@@ -131,7 +133,6 @@ class ZoneCropKcNumber(
     _attr_native_step = 0.05
     _attr_mode = NumberMode.BOX
     _attr_icon = "mdi:grass"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -139,6 +140,8 @@ class ZoneCropKcNumber(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Crop Kc"
         self._attr_unique_id = f"podlewanie_{zone_key}_crop_kc"
 
@@ -167,10 +170,11 @@ class MoistureThresholdNumber(
     _attr_native_unit_of_measurement = "%"
     _attr_mode = NumberMode.SLIDER
     _attr_icon = "mdi:water-percent"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = controller_device_info(entry_id)
         self._attr_name = "Podlewanie Moisture Threshold"
         self._attr_unique_id = "podlewanie_moisture_threshold"
 
@@ -197,10 +201,11 @@ class RainThresholdNumber(
     _attr_native_unit_of_measurement = "mm/h"
     _attr_mode = NumberMode.BOX
     _attr_icon = "mdi:weather-rainy"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = controller_device_info(entry_id)
         self._attr_name = "Podlewanie Rain Threshold"
         self._attr_unique_id = "podlewanie_rain_threshold"
 
@@ -226,10 +231,11 @@ class SeasonMultiplierNumber(
     _attr_native_unit_of_measurement = "%"
     _attr_mode = NumberMode.SLIDER
     _attr_icon = "mdi:calendar-range"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = controller_device_info(entry_id)
         self._attr_name = "Podlewanie Season Multiplier"
         self._attr_unique_id = "podlewanie_season_multiplier"
 

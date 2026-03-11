@@ -1,25 +1,24 @@
-"""Switch platform for Podlewanie."""
+"""Switch platform for Podlewanie (v2 — device-per-zone)."""
 
 from __future__ import annotations
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .binary_sensor import DEVICE_INFO
-from .const import DOMAIN
+from .__init__ import PodlewanieConfigEntry
+from .const import controller_device_info, zone_device_info
 from .coordinator import PodlewanieCoordinator
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PodlewanieConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Podlewanie switches from config entry."""
-    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
+    coordinator: PodlewanieCoordinator = entry.runtime_data
 
     entities: list[SwitchEntity] = []
 
@@ -37,7 +36,6 @@ class ZoneEnabledSwitch(
     """Switch to enable/disable a zone in schedules."""
 
     _attr_icon = "mdi:sprinkler"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -45,6 +43,8 @@ class ZoneEnabledSwitch(
         super().__init__(coordinator)
         self._zone_key = zone_key
         zone = coordinator.get_zone(zone_key)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = zone_device_info(entry_id, zone_key, zone.name)
         self._attr_name = f"Podlewanie {zone.name} Enabled"
         self._attr_unique_id = f"podlewanie_{zone_key}_enabled"
 
@@ -76,10 +76,11 @@ class MasterEnabledSwitch(
     """Master ON/OFF switch for the entire irrigation system."""
 
     _attr_icon = "mdi:sprinkler-variant"
-    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
+        entry_id = coordinator.entry.entry_id
+        self._attr_device_info = controller_device_info(entry_id)
         self._attr_name = "Podlewanie Enabled"
         self._attr_unique_id = "podlewanie_enabled"
 

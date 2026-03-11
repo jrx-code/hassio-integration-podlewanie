@@ -67,7 +67,3 @@ disable:
       required: true
       selector:
         text:
-
-reload:
-  name: Reload
-  description: Reload the Podlewanie configuration (requires HA restart for YAML changes).

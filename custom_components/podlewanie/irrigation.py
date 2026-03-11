@@ -533,25 +533,40 @@ class Sequencer:
         self._notify_update()
 
     async def _open_valve(self, zone: Zone) -> None:
-        """Open zone valve with verification."""
-        await self._hass.services.async_call(
-            "switch", "turn_on", {"entity_id": zone.valve_entity}
-        )
+        """Open zone valve with verification (supports switch.* and valve.*)."""
+        entity_id = zone.valve_entity
+        if entity_id.startswith("valve."):
+            await self._hass.services.async_call(
+                "valve", "open_valve", {"entity_id": entity_id}
+            )
+            expected_state = "open"
+        else:
+            await self._hass.services.async_call(
+                "switch", "turn_on", {"entity_id": entity_id}
+            )
+            expected_state = STATE_ON
         await asyncio.sleep(VALVE_VERIFY_DELAY)
 
-        state = self._hass.states.get(zone.valve_entity)
-        if state is None or state.state != STATE_ON:
+        state = self._hass.states.get(entity_id)
+        if state is None or state.state != expected_state:
             _LOGGER.warning(
-                "Valve %s did not open (state: %s)",
-                zone.valve_entity,
+                "Valve %s did not open (state: %s, expected: %s)",
+                entity_id,
                 state.state if state else "unknown",
+                expected_state,
             )
 
     async def _close_valve(self, zone: Zone) -> None:
-        """Close zone valve."""
-        await self._hass.services.async_call(
-            "switch", "turn_off", {"entity_id": zone.valve_entity}
-        )
+        """Close zone valve (supports switch.* and valve.*)."""
+        entity_id = zone.valve_entity
+        if entity_id.startswith("valve."):
+            await self._hass.services.async_call(
+                "valve", "close_valve", {"entity_id": entity_id}
+            )
+        else:
+            await self._hass.services.async_call(
+                "switch", "turn_off", {"entity_id": entity_id}
+            )
 
     async def _stop_all(self, zones: list[Zone]) -> None:
         """Stop all zones and pump."""
