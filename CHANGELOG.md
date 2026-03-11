@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] — 2026-03-11
+
+### Added
+- Brand icon (sprinkler on green circle, `brand/icon.png` + `icon@2x.png`)
+
 ## [1.0.0] — 2026-03-11
 
 ### Added
