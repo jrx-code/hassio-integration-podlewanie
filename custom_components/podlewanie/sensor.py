@@ -9,24 +9,24 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE, UnitOfTime, UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .binary_sensor import DEVICE_INFO
 from .const import DOMAIN
 from .coordinator import PodlewanieCoordinator
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up Podlewanie sensors from YAML discovery."""
-    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+    """Set up Podlewanie sensors from config entry."""
+    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
 
     entities: list[SensorEntity] = []
 
@@ -53,6 +53,7 @@ class ZoneRemainingSensor(
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.MINUTES
     _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -77,6 +78,7 @@ class ZoneNextRunSensor(
     """Next scheduled run time for a zone."""
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -101,6 +103,7 @@ class ZoneVolumeTodaySensor(
     _attr_device_class = SensorDeviceClass.VOLUME
     _attr_native_unit_of_measurement = UnitOfVolume.LITERS
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -125,6 +128,7 @@ class ZoneBucketSensor(
     _attr_native_unit_of_measurement = "mm"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:water-opacity"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -150,6 +154,7 @@ class ZoneSoilSensor(
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_device_class = SensorDeviceClass.MOISTURE
     _attr_icon = "mdi:water-percent"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -182,6 +187,7 @@ class ETDailySensor(
     _attr_native_unit_of_measurement = "mm/day"
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:weather-sunny-alert"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
@@ -199,6 +205,7 @@ class StatusSensor(
     """Controller status sensor."""
 
     _attr_icon = "mdi:sprinkler-variant"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
@@ -207,7 +214,6 @@ class StatusSensor(
 
     @property
     def native_value(self) -> str:
-        # Derive status directly from live state, not cached coordinator.status
         if self.coordinator._antifreeze and self.coordinator._antifreeze.is_hibernating:
             return "hibernation"
         if self.coordinator.sequencer.is_running:
@@ -223,7 +229,6 @@ class StatusSensor(
             "master_enabled": self.coordinator.master_enabled,
             "season_multiplier": self.coordinator.season_multiplier,
         }
-        # Add active zone info
         for zone in self.coordinator.zones:
             if zone.active:
                 attrs["active_zone"] = zone.name

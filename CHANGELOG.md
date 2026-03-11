@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] — 2026-03-11
+
+### Added
+- UI config flow — integration can now be added from Settings → Integrations
+- Auto-import from YAML — config entry created automatically when YAML config present
+- DeviceInfo for all entities — grouped under "Podlewanie" device in UI
+- `config_flow.py` with single-instance guard
+- `strings.json` for config flow localization
+
+### Changed
+- Platforms use `async_setup_entry` instead of `async_setup_platform` (discovery)
+- Coordinator stored in `hass.data[DOMAIN]["coordinator"]` (was `hass.data[DOMAIN]`)
+
 ## [1.0.1] — 2026-03-11
 
 ### Added

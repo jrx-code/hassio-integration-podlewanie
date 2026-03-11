@@ -3,23 +3,23 @@
 from __future__ import annotations
 
 from homeassistant.components.switch import SwitchEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .binary_sensor import DEVICE_INFO
 from .const import DOMAIN
 from .coordinator import PodlewanieCoordinator
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up Podlewanie switches from YAML discovery."""
-    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+    """Set up Podlewanie switches from config entry."""
+    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
 
     entities: list[SwitchEntity] = []
 
@@ -37,6 +37,7 @@ class ZoneEnabledSwitch(
     """Switch to enable/disable a zone in schedules."""
 
     _attr_icon = "mdi:sprinkler"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -75,6 +76,7 @@ class MasterEnabledSwitch(
     """Master ON/OFF switch for the entire irrigation system."""
 
     _attr_icon = "mdi:sprinkler-variant"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
@@ -93,7 +95,6 @@ class MasterEnabledSwitch(
 
     async def async_turn_off(self, **kwargs) -> None:
         self.coordinator.master_enabled = False
-        # Cancel any running sequence
         await self.coordinator.sequencer.cancel()
         self.coordinator.async_set_updated_data(
             self.coordinator.data or {}

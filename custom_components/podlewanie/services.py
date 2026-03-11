@@ -55,7 +55,7 @@ async def async_register_services(hass: HomeAssistant) -> None:
     """Register Podlewanie services."""
 
     async def handle_manual_run(call: ServiceCall) -> None:
-        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
         zone_key = call.data[ATTR_ZONE]
         duration = call.data.get(ATTR_DURATION)
 
@@ -72,19 +72,19 @@ async def async_register_services(hass: HomeAssistant) -> None:
         await coordinator.sequencer.run_single(zone, duration)
 
     async def handle_run_sequence(call: ServiceCall) -> None:
-        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
         _LOGGER.info("Running full irrigation sequence")
         await coordinator.sequencer.run_sequence(
             season_multiplier=coordinator.season_multiplier
         )
 
     async def handle_cancel(call: ServiceCall) -> None:
-        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
         _LOGGER.info("Cancelling irrigation")
         await coordinator.sequencer.cancel()
 
     async def handle_adjust_time(call: ServiceCall) -> None:
-        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
         zone_key = call.data[ATTR_ZONE]
         percentage = call.data[ATTR_PERCENTAGE]
 
@@ -98,7 +98,7 @@ async def async_register_services(hass: HomeAssistant) -> None:
         coordinator.async_set_updated_data(coordinator.data or {})
 
     async def handle_enable(call: ServiceCall) -> None:
-        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
         zone_key = call.data[ATTR_ZONE]
 
         zone = coordinator.get_zone(zone_key)
@@ -111,7 +111,7 @@ async def async_register_services(hass: HomeAssistant) -> None:
         coordinator.async_set_updated_data(coordinator.data or {})
 
     async def handle_disable(call: ServiceCall) -> None:
-        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+        coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
         zone_key = call.data[ATTR_ZONE]
 
         zone = coordinator.get_zone(zone_key)

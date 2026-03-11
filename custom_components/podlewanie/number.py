@@ -3,30 +3,27 @@
 from __future__ import annotations
 
 from homeassistant.components.number import NumberEntity, NumberMode
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .binary_sensor import DEVICE_INFO
 from .const import (
     DEFAULT_CROP_KC,
-    DEFAULT_MOISTURE_THRESHOLD,
-    DEFAULT_RAIN_THRESHOLD,
-    DEFAULT_SEASON_MULTIPLIER,
     DEFAULT_ZONE_ADJUSTMENT,
     DOMAIN,
 )
 from .coordinator import PodlewanieCoordinator
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
+    entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
-    """Set up Podlewanie numbers from YAML discovery."""
-    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]
+    """Set up Podlewanie numbers from config entry."""
+    coordinator: PodlewanieCoordinator = hass.data[DOMAIN]["coordinator"]
 
     entities: list[NumberEntity] = []
 
@@ -57,6 +54,7 @@ class ZoneDurationNumber(
     _attr_native_unit_of_measurement = "min"
     _attr_mode = NumberMode.BOX
     _attr_icon = "mdi:timer-outline"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -98,6 +96,7 @@ class ZoneAdjustmentNumber(
     _attr_native_unit_of_measurement = "%"
     _attr_mode = NumberMode.SLIDER
     _attr_icon = "mdi:tune-variant"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -132,6 +131,7 @@ class ZoneCropKcNumber(
     _attr_native_step = 0.05
     _attr_mode = NumberMode.BOX
     _attr_icon = "mdi:grass"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(
         self, coordinator: PodlewanieCoordinator, zone_key: str
@@ -167,6 +167,7 @@ class MoistureThresholdNumber(
     _attr_native_unit_of_measurement = "%"
     _attr_mode = NumberMode.SLIDER
     _attr_icon = "mdi:water-percent"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
@@ -196,6 +197,7 @@ class RainThresholdNumber(
     _attr_native_unit_of_measurement = "mm/h"
     _attr_mode = NumberMode.BOX
     _attr_icon = "mdi:weather-rainy"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)
@@ -224,6 +226,7 @@ class SeasonMultiplierNumber(
     _attr_native_unit_of_measurement = "%"
     _attr_mode = NumberMode.SLIDER
     _attr_icon = "mdi:calendar-range"
+    _attr_device_info = DEVICE_INFO
 
     def __init__(self, coordinator: PodlewanieCoordinator) -> None:
         super().__init__(coordinator)

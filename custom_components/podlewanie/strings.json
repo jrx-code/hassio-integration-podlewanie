@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Podlewanie",
+        "description": "Add the Podlewanie irrigation controller.\n\nZone configuration is done in YAML (configuration.yaml)."
+      }
+    },
+    "abort": {
+      "already_configured": "Podlewanie is already configured."
+    }
+  }
+}
