@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] — 2026-03-12
+
+### Added
+- **Full UI configuration** — no YAML needed, everything via Settings → Integrations → Configure
+- Options flow with menu-driven interface:
+  - Add/Edit/Remove zones dynamically
+  - Add/Edit/Remove schedules
+  - Weather settings (rain sensors, forecast, thresholds)
+  - Rainwater tank (enable/disable + pump control)
+  - Anti-freeze (enable/disable, tiers, hibernation)
+  - Evapotranspiration (ET) settings
+  - Sequencer settings (inter-zone delay)
+- **Device-per-zone grouping** — each zone is a separate HA device (child of controller)
+- Valve domain detection — supports both `switch.*` and `valve.*` entities
+- Config entry migration (v1 → v2) — existing YAML config auto-imported
+
+### Changed
+- `config_flow.py` — complete rewrite with ConfigFlow v2 + OptionsFlow (~930 lines)
+- `__init__.py` — removed YAML dependency, uses `entry.runtime_data` pattern
+- `coordinator.py` — accepts ConfigEntry, parses time strings from options
+- All entity platforms — device-per-zone + `entry.runtime_data`
+- `services.py` — coordinator access via config entry runtime_data
+- `schema.py` — removed (no longer needed)
+
+### Removed
+- YAML configuration support (deprecated, auto-migrated to UI)
+- `schema.py` — voluptuous schema for YAML validation
+
 ## [1.1.0] — 2026-03-11
 
 ### Added
