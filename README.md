@@ -1,128 +1,99 @@
-# Podlewanie — Custom Home Assistant Integration
+# Podlewanie
 
-Autorska integracja HA do zarządzania nawadnianiem ogrodu. YAML-only config, bez UI config flow.
+A garden irrigation controller for Home Assistant, configured entirely from the UI.
+It replaces the usual stack of Irrigation Unlimited, Smart Irrigation and a pile of
+automations with one integration: schedules, a sequential zone runner, an
+evapotranspiration (ET₀) water budget per zone, rain skipping, anti-freeze flushing
+and an optional rainwater tank pump.
 
-Zastępuje: Irrigation Unlimited + Smart Irrigation + 9 plików automatyk + 4 packages.
+It drives valves you already have (any `switch.*` or `valve.*` entity), so it works
+with LinkTap, Rainbird, Zigbee valves, relays and so on.
 
 ## Features
 
-- **4-zone sequential irrigation** with configurable schedules (morning/evening/winter)
-- **Hargreaves ET₀** evapotranspiration calculation (daily at 03:00)
-- **Per-zone moisture bucket tracking** with soil sensor correction
-- **Anti-freeze flush** with temperature tiers and hibernation mode
-- **Rainwater tank pump controller** with hysteresis
-- **Weather-based skip logic** (rain sensors + forecast)
-- **Persistent state** survives HA restarts (bucket levels, enabled states, adjustments)
-
-## Entities (47)
-
-| Platform | Count | Examples |
-|---|---|---|
-| `binary_sensor` | 5 | `podlewanie_{zone}_active`, `podlewanie_running` |
-| `sensor` | 22 | `{zone}_remaining`, `{zone}_next_run`, `{zone}_volume_today`, `{zone}_bucket`, `{zone}_soil`, `et_daily`, `status` |
-| `switch` | 5 | `podlewanie_{zone}_enabled`, `podlewanie_enabled` |
-| `number` | 15 | `{zone}_duration`, `{zone}_adjustment`, `{zone}_crop_kc`, `moisture_threshold`, `rain_threshold`, `season_multiplier` |
-
-## Services (7)
-
-| Service | Description |
-|---|---|
-| `podlewanie.manual_run` | Run single zone (zone, duration?) |
-| `podlewanie.run_sequence` | Full sequential cycle for all enabled zones |
-| `podlewanie.cancel` | Stop all irrigation immediately |
-| `podlewanie.adjust_time` | Set zone duration multiplier (zone, percentage) |
-| `podlewanie.enable` | Enable zone for scheduling |
-| `podlewanie.disable` | Disable zone from scheduling |
-| `podlewanie.reload` | Reload configuration |
+- Zones, each with its own valve, area, default and maximum run time
+- Schedules (time, months, weekdays) that start a sequential run of all enabled zones
+- Hargreaves ET₀ calculated daily at 03:00 from your Home Assistant latitude and the
+  daily temperature range
+- Per-zone moisture bucket that tracks water lost and applied, with optional
+  soil moisture correction
+- Skips a run after rain (rain sensors, a rain binary sensor, forecast entity)
+- Anti-freeze flush with temperature tiers
+- Optional rainwater tank pump controller with level hysteresis
+- State survives restarts (bucket levels, enabled flags, adjustments)
+- One Home Assistant device per zone, grouped under the controller
 
 ## Installation
 
-Copy `custom_components/podlewanie/` to your HA `config/custom_components/` directory.
+### HACS
 
-Add to `configuration.yaml`:
+1. HACS → Integrations → three dots → Custom repositories.
+2. Add `https://github.com/jrx-code/hassio-integration-podlewanie`, category Integration.
+3. Install **Podlewanie** and restart Home Assistant.
 
-```yaml
-podlewanie:
-  latitude: 53.4289
+### Manual
 
-  zones:
-    - key: brzeg_domu
-      name: "Brzeg Domu"
-      valve: switch.linktap_obwod_brzeg_domu
-      area_m2: 40
-      duration: 15
-      max_duration: 60
-      soil_moisture: sensor.ts0601_1_obwod_brzeg_domu_wilgotnosc_gleby
-      soil_temperature: sensor.ts0601_1_obwod_brzeg_domu_temperatura
-      flow_meter: sensor.linktap_obwod_brzeg_domu_volume
+Copy `custom_components/podlewanie` into your `config/custom_components/` directory and
+restart Home Assistant.
 
-  sequencer:
-    inter_zone_delay: 30
+## Setup
 
-  schedules:
-    - key: morning
-      time: "05:30"
-      months: [4,5,6,7,8,9,10]
-      weekdays: [mon,wed,fri,sun]
+1. Settings → Devices & services → Add integration → **Podlewanie** (one instance).
+2. Open **Configure** on the integration. The menu has:
 
-  weather:
-    rain_sensors:
-      - sensor.openweathermap_rain
-    rain_binary: binary_sensor.czujnik_deszczu_multisensor_rain_0
-    forecast_entity: weather.openweathermap
+| Menu | What it sets |
+|---|---|
+| Add / Edit / Remove zone | Valve entity, area, default and maximum duration, optional soil moisture, soil temperature, sensor battery and flow meter |
+| Schedules | Start time, months and weekdays, add / edit / remove |
+| Weather | Rain sensors, rain binary sensor, forecast entity, thresholds |
+| Rainwater tank | Level sensor and pump switch, on/off |
+| Anti-freeze | Temperature tiers, flush duration, hibernation |
+| Evapotranspiration (ET) | ET switch, bucket size, moisture threshold |
+| Sequencer | Delay between zones |
 
-  tank:
-    level_sensor: sensor.deszczowka_zapelnienie
-    pump_switch: switch.sterownik_pompy_wody_deszczowej
+An older YAML configuration (v1) is imported into a config entry automatically.
 
-  antifreeze:
-    flush_duration: 30
-    tiers:
-      - temp_max: -2
-        interval: 30
-      - temp_max: 0
-        interval: 60
-      - temp_max: 3
-        interval: 180
+## Entities
 
-  et:
-    enabled: true
-    bucket_max: 25.0
-    moisture_threshold: 40
-```
+Per zone: an *enabled* switch, *duration* / *adjustment* / crop coefficient numbers,
+and sensors for remaining time, next run, volume today, bucket level and soil
+moisture. Controller-wide: *enabled* switch, a *running* binary sensor, daily ET₀,
+overall status and the threshold numbers (moisture, rain, season multiplier).
 
-## Architecture
+## Services
 
-```
-irrigation.py    — Zone, ETCalculator, BucketTracker, Sequencer (FSM), AntifreezeManager, PumpController
-coordinator.py   — DataUpdateCoordinator, scheduler, persistence, weather/rain skip
-__init__.py      — async_setup (YAML), platform discovery
-binary_sensor.py — 5 entities
-sensor.py        — 22 entities
-switch.py        — 5 entities
-number.py        — 15 entities
-services.py      — 7 service handlers
-```
+| Service | Description |
+|---|---|
+| `podlewanie.manual_run` | Run one zone, optional duration |
+| `podlewanie.run_sequence` | Run all enabled zones one after another |
+| `podlewanie.cancel` | Stop all irrigation immediately |
+| `podlewanie.adjust_time` | Set a zone's duration multiplier in percent |
+| `podlewanie.enable` | Enable a zone for scheduling |
+| `podlewanie.disable` | Disable a zone |
 
-### Sequencer State Machine
+## How it works
+
+Sequencer state machine:
 
 ```
 IDLE → PRIMING_PUMP → WATERING → INTER_ZONE_DELAY → (next zone) → STOPPING → IDLE
 ```
 
-### ET₀ Hargreaves
+Hargreaves reference evapotranspiration:
 
 ```
-ET₀ = 0.0023 × (T_mean + 17.8) × (T_max - T_min)^0.5 × Ra
+ET₀ = 0.0023 × (T_mean + 17.8) × √(T_max − T_min) × Ra
 ```
 
-## Hardware
+`Ra` is computed from the latitude of your Home Assistant installation and the day of
+the year. The daily minimum and maximum temperature come from the forecast of the
+weather entity you pick in the Weather menu; without it ET₀ is not calculated.
 
-- 4× LinkTap water valves (G2S)
-- 4× Tuya soil moisture/temperature sensors (TS0601)
-- 1× rain gauge + binary rain sensor
-- 1× rainwater tank level sensor + pump switch
+## Status
+
+Version 2.0.0. Written for and used on one garden with four zones; other setups may
+hit gaps. Issues and pull requests are welcome.
 
 ## License
 
-Private — JI ENGINEERING
+MIT, see [LICENSE](LICENSE).
